@@ -1,2 +1,2 @@
-# vjs-auth-voipgrid
+# vialer-js-auth-voipgrid
 Vialer-js authentication provider for the VoIPGRID platform.
