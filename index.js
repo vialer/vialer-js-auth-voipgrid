@@ -1,6 +1,6 @@
-const UserProvider = require('vialer-js/src/js/bg/modules/user/provider')
+const UserAdapter = require('vialer-js/src/js/bg/modules/user/adapter')
 
-class UserProviderVoipgrid extends UserProvider {
+class UserAdapterVoipgrid extends UserAdapter {
     constructor(app) {
         super(app)
 
@@ -102,4 +102,4 @@ class UserProviderVoipgrid extends UserProvider {
     }
 }
 
-module.exports = UserProviderVoipgrid
+module.exports = UserAdapterVoipgrid

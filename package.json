@@ -1,5 +1,5 @@
 {
-  "name": "vialer-js-auth-voipgrid",
+  "name": "vialer-js-user-voipgrid",
   "version": "3.0.0",
   "description": "Vialer-js Authentication provider for the VoIPGRID platform.",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vialer/vjs-auth-voipgrid.git"
+    "url": "git+https://github.com/vialer/vialer-user-voipgrid.git"
   },
   "keywords": [
     "vialer-js",
@@ -17,7 +17,7 @@
   "author": "Windshaft B.V.",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/vialer/vialer-js-auth-voipgrid/issues"
+    "url": "https://github.com/vialer/vialer-js-user-voipgrid/issues"
   },
   "homepage": "https://vialer-js.io"
 }
