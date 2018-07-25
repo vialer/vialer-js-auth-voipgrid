@@ -1,7 +1,7 @@
 {
   "name": "vjs-user-adapter-vg",
   "version": "3.0.0",
-  "description": "Vialer-js User adapter for the VoIPGRID platform.",
+  "description": "Vialer-js User adapter for the VoIPGRID API.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
