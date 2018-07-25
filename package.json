@@ -1,14 +1,14 @@
 {
-  "name": "vialer-js-user-voipgrid",
+  "name": "vjs-user-adapter-vg",
   "version": "3.0.0",
-  "description": "Vialer-js Authentication provider for the VoIPGRID platform.",
+  "description": "Vialer-js User adapter for the VoIPGRID platform.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vialer/vialer-user-voipgrid.git"
+    "url": "git+https://github.com/vialer/vjs-user-adapter-vg.git"
   },
   "keywords": [
     "vialer-js",
@@ -17,7 +17,7 @@
   "author": "Windshaft B.V.",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/vialer/vialer-js-user-voipgrid/issues"
+    "url": "https://github.com/vialer/vjs-user-adapter-vg/issues"
   },
-  "homepage": "https://vialer-js.io"
+  "homepage": "https://github.com/vialer/vjs-user-adapter-vg#readme"
 }
