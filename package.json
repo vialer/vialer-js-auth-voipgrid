@@ -1,5 +1,5 @@
 {
-  "name": "vjs-user-adapter-vg",
+  "name": "vjs-adapter-user-vg",
   "version": "3.0.0",
   "description": "Vialer-js User adapter for the VoIPGRID API.",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vialer/vjs-user-adapter-vg.git"
+    "url": "git+https://github.com/vialer/vjs-adapter-user-vg.git"
   },
   "keywords": [
     "vialer-js",
@@ -17,7 +17,7 @@
   "author": "Windshaft B.V.",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/vialer/vjs-user-adapter-vg/issues"
+    "url": "https://github.com/vialer/vjs-adapter-user-vg/issues"
   },
-  "homepage": "https://github.com/vialer/vjs-user-adapter-vg#readme"
+  "homepage": "https://github.com/vialer/vjs-adapter-user-vg#readme"
 }
