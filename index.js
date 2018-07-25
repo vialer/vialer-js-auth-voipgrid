@@ -14,6 +14,7 @@ class UserAdapterVoipgrid extends UserAdapter {
     _initialState() {
         return {
             platform: {
+                account: {id: null, password: null, username: null},
                 tokens: {
                     portal: null,
                     sip: null,
@@ -30,9 +31,19 @@ class UserAdapterVoipgrid extends UserAdapter {
     * used to login automatically when the user opens a link
     * to the vendor portal.
     */
-    async _platformData() {
-        const res = await this.app.api.client.get('api/autologin/token/')
-        this.app.setState({user: {platform: {tokens: {portal: res.data.token}}}})
+    _platformData() {
+        return new Promise(async(resolve, reject) => {
+            let res
+            try {
+                res = await this.app.api.client.get('api/autologin/token/')
+            } catch (err) {
+                return reject(err)
+            }
+
+            this.app.setState({user: {platform: {tokens: {portal: res.data.token}}}})
+            this.app.logger.info(`${this}(re)loaded autologin token`)
+            resolve()
+        })
     }
 
 
@@ -46,17 +57,17 @@ class UserAdapterVoipgrid extends UserAdapter {
     * @param {String} [options.token] - A 2fa token to login with.
     */
     async login({callback, username, password, token}) {
-        if (this.app.state.app.session.active !== username) this.app.setSession(username)
-        this.app.setState({user: {status: 'loading'}})
+        this.app.setState({user: {status: 'login'}})
 
-        let apiParams
+        let apiParams, res
+
         if (token) apiParams = {email: username, password, two_factor_token: token}
         else apiParams = {email: username, password}
 
-        const res = await this.app.api.client.post('api/permission/apitoken/', apiParams)
+        res = await this.app.api.client.post('api/permission/apitoken/', apiParams)
+
         // A login failure. Give the user feedback about what went wrong.
         if (this.app.api.NOTOK_STATUS.includes(res.status)) {
-            this.app.setState({user: {status: null}})
             let message
             if (res.data.apitoken) {
                 if (res.data.apitoken.email || res.data.apitoken.password) {
@@ -73,6 +84,7 @@ class UserAdapterVoipgrid extends UserAdapter {
                     }
                 }
             }
+            this.app.setState({user: {status: null}})
             return
         }
 
@@ -89,7 +101,7 @@ class UserAdapterVoipgrid extends UserAdapter {
         let userFields = {
             client_id: _res.data.client.replace(/[^\d.]/g, ''),
             id: _res.data.id,
-            platform: {tokens: {sip: _res.data.token}},
+            platform: {account: {username, password: _res.data.token, uri: `sip:${username}`}},
             realName: [
                 _res.data.first_name,
                 _res.data.preposition,
@@ -98,7 +110,34 @@ class UserAdapterVoipgrid extends UserAdapter {
             token: res.data.api_token,
         }
 
-        super.login({username, password, userFields})
+        this.app.logger.info(`${this}${username} authenticated successfully`)
+
+        if (this.app.state.app.session.active !== username) {
+            // State is reinitialized, but we are not done loading yet.
+            let keptState = {user: {status: 'login'}}
+            this.app.setSession(username, keptState)
+        }
+
+        await super.login({username, password, userFields})
+
+        let selectedAccount = this.app.state.settings.webrtc.account.selected
+        // No account selected yet.
+        if (!selectedAccount.username || !selectedAccount.password) {
+            this.app.logger.info(`${this}no account set; use ConnectAB account info`)
+            await this.app.setState({settings: {webrtc: {account: {selected: userFields.platform.account}}}}, {persist: true})
+        }
+
+        this.app.setState({user: {status: null}})
+        this.app.__initServices(false)
+    }
+
+
+    /**
+    * Generate a representational name for this module. Used for logging.
+    * @returns {String} - An identifier for this module.
+    */
+    toString() {
+        return `${this.app}[user-voipgrid] `
     }
 }
 
