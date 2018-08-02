@@ -1,2 +1,2 @@
-# vialer-js-auth-voipgrid
-Vialer-js authentication provider for the VoIPGRID platform.
+# vjs-adapter-user-vg
+Vialer-js User Adapter for the VoIPGRID platform.

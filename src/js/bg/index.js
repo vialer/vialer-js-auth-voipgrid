@@ -14,7 +14,12 @@ class UserAdapterVoipgrid extends UserAdapter {
     _initialState() {
         return {
             platform: {
-                account: {id: null, password: null, username: null},
+                account: {
+                    id: null,
+                    password: null,
+                    username: null,
+                    selection: true,
+                },
                 tokens: {
                     portal: null,
                     sip: null,
@@ -83,6 +88,13 @@ class UserAdapterVoipgrid extends UserAdapter {
                         callback({message, valid: false})
                     }
                 }
+            } else if (res.data.error) {
+                if (res.data.error.message.includes('Te veel')) {
+                    // We only need the time to keep the message clear.
+                    const retryTime = res.data.error.message.split(' ').pop()
+                    message = this.app.$t('too many failed login attempts - wait until {date}', {date: retryTime})
+                    this.app.notify({icon: 'warning', message, type: 'warning'})
+                }
             }
             this.app.setState({user: {status: null}})
             return
@@ -101,7 +113,13 @@ class UserAdapterVoipgrid extends UserAdapter {
         let userFields = {
             client_id: _res.data.client.replace(/[^\d.]/g, ''),
             id: _res.data.id,
-            platform: {account: {username, password: _res.data.token, uri: `sip:${username}`}},
+            platform: {
+                account: {
+                    username,
+                    password: _res.data.token,
+                    uri: `sip:${username}`
+                }
+            },
             realName: [
                 _res.data.first_name,
                 _res.data.preposition,
@@ -115,7 +133,7 @@ class UserAdapterVoipgrid extends UserAdapter {
         if (this.app.state.app.session.active !== username) {
             // State is reinitialized, but we are not done loading yet.
             let keptState = {user: {status: 'login'}}
-            this.app.setSession(username, keptState)
+            await this.app.changeSession(username, keptState)
         }
 
         await super.login({username, password, userFields})
@@ -137,7 +155,7 @@ class UserAdapterVoipgrid extends UserAdapter {
     * @returns {String} - An identifier for this module.
     */
     toString() {
-        return `${this.app}[user-voipgrid] `
+        return `${this.app}[adapter-user-vg] `
     }
 }
 
