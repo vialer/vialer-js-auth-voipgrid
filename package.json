@@ -1,23 +1,26 @@
 {
-  "name": "vjs-adapter-user-vg",
-  "version": "3.0.0",
-  "description": "Vialer-js User adapter for the VoIPGRID API.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vialer/vjs-adapter-user-vg.git"
-  },
-  "keywords": [
-    "vialer-js",
-    "softphone"
-  ],
-  "author": "Windshaft B.V.",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/vialer/vjs-adapter-user-vg/issues"
-  },
-  "homepage": "https://github.com/vialer/vjs-adapter-user-vg#readme"
+    "name": "vjs-adapter-user-vg",
+    "version": "3.0.0",
+    "description": "Vialer-js User adapter for the VoIPGRID API.",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vialer/vjs-adapter-user-vg.git"
+    },
+    "peerDependencies": {
+        "vialer-js": "4.x"
+    },
+    "keywords": [
+        "vialer-js",
+        "softphone"
+    ],
+    "author": "Windshaft B.V.",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/vialer/vjs-adapter-user-vg/issues"
+    },
+    "homepage": "https://github.com/vialer/vjs-adapter-user-vg#readme"
 }
