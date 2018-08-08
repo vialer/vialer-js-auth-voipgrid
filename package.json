@@ -10,9 +10,6 @@
         "type": "git",
         "url": "git+https://github.com/vialer/vjs-adapter-user-vg.git"
     },
-    "peerDependencies": {
-        "vialer-js": "4.x"
-    },
     "keywords": [
         "vialer-js",
         "softphone"
