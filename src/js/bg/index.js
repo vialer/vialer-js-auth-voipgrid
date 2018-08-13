@@ -1,4 +1,4 @@
-const UserAdapter = require('vialer-js/bg/modules/user/adapter')
+const UserAdapter = require('vialer-js/bg/plugins/user/adapter')
 
 class UserAdapterVoipgrid extends UserAdapter {
     constructor(app) {
