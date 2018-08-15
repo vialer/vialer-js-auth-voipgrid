@@ -11,6 +11,23 @@ class UserAdapterVoipgrid extends UserAdapter {
     }
 
 
+    /**
+    * Format an account from the VoIPGRID API
+    * to an internally used format.
+    */
+    _formatAccount(account) {
+        let option = {
+            id: account.id,
+            name: `${account.internal_number} - ${account.description}`,
+            uri: `sip:${account.account_id}@voipgrid.nl`,
+            username: account.account_id,
+        }
+
+        if (account.password) option.password = account.password
+        return option
+    }
+
+
     _initialState() {
         return {
             platform: {
@@ -101,17 +118,27 @@ class UserAdapterVoipgrid extends UserAdapter {
         }
 
         this.app.api.setupClient(username, res.data.api_token)
-        const _res = await this.app.api.client.get('api/permission/systemuser/profile/')
+        const _res = await this.app.api.client.get('api/plugin/user/')
 
-        if (!_res.data.client) {
+        // Do some checks for user validity.
+        if (_res.status === 401) {
             //Logout partner users. Only platform client users are able to use
             // VoIPGRID platform telephony features.
-            this.logout()
-            this.app.notify({icon: 'settings', message: this.app.$t('this type of user is invalid.'), type: 'warning'})
+            const message = this.app.$t('a partner user cannot be used to login with.')
+            this.app.changeSession(null, {app: {notifications: [{icon: 'settings', message, type: 'warning'}]}})
+            return
+        } else if (_res.data === 'You need to change your password in the portal') {
+            this.app.notify({icon: 'settings', message: this.app.$t('You need to change your password in the portal.'), type: 'warning'})
             return
         }
+
+        // TODO: Replace hardcoded fields with data from API.
+        console.log("LOGIN", _res.data)
+        _res.data.client_id = 540111
+        _res.data.id = 500911
+
         let userFields = {
-            client_id: _res.data.client.replace(/[^\d.]/g, ''),
+            client_id: _res.data.client_id,
             id: _res.data.id,
             platform: {
                 account: {
@@ -137,10 +164,10 @@ class UserAdapterVoipgrid extends UserAdapter {
         }
 
         await super.login({username, password, userFields})
-
-        let selectedAccount = this.app.state.settings.webrtc.account.selected
-        // No account selected yet.
-        if (!selectedAccount.username || !selectedAccount.password) {
+        const selected = _res.data.selected_account
+        if (selected) {
+            await this.app.setState({settings: {webrtc: {account: {selected: this._formatAccount(selected)}, enabled: true}}}, {persist: true})
+        } else {
             this.app.logger.info(`${this}no account set; use ConnectAB account info`)
             await this.app.setState({settings: {webrtc: {account: {selected: userFields.platform.account}}}}, {persist: true})
         }
