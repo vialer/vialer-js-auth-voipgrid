@@ -11,13 +11,39 @@ class UserAdapterVoipgrid extends UserAdapter {
     }
 
 
+    /**
+    * Format an account from the VoIPGRID API
+    * to an internally used format.
+    */
+    _formatAccount(account) {
+        let option = {
+            id: account.id,
+            name: `${account.internal_number} - ${account.description}`,
+            uri: `sip:${account.account_id}@voipgrid.nl`,
+            username: account.account_id,
+        }
+        if (account.password) option.password = account.password
+        return option
+    }
+
+
     _initialState() {
         return {
             platform: {
                 account: {
-                    id: null,
-                    password: null,
-                    username: null,
+                    fallback: {
+                        id: null,
+                        password: null,
+                        username: null,
+                    },
+                    selected: {
+                        // A selected account may not be the actual *used*
+                        // account at that moment when the fallback account
+                        // is used. This is just a reference to the previously
+                        // set account option, so we can restore it when
+                        // re-enabling webrtc again.
+                        id: null,
+                    },
                     selection: true,
                 },
                 tokens: {
@@ -49,6 +75,24 @@ class UserAdapterVoipgrid extends UserAdapter {
             this.app.logger.info(`${this}(re)loaded autologin token`)
             resolve()
         })
+    }
+
+
+    /**
+    * Handles changing the account and signals the when this is done
+    * by responding with the *complete* account credentials in
+    * the callback.
+    */
+    async _selectAccount({account, callback}) {
+        this.app.logger.info(`${this}switching to new account: ${account.id}`)
+        // New API call:
+        // const res = await this.app.api.client.put('api/plugin/user/selected_account/', {id: account.id})
+        // account = this.app.plugins.user.adapter._formatAccount(account)
+        this.app.setState({
+            settings: {webrtc: {account: {selected: account}}},
+            user: {platform: {account: {selected: {id: account.id}}}},
+        }, {persist: true})
+        callback({account})
     }
 
 
@@ -115,10 +159,12 @@ class UserAdapterVoipgrid extends UserAdapter {
             id: _res.data.id,
             platform: {
                 account: {
-                    username,
-                    password: _res.data.token,
-                    uri: `sip:${username}`
-                }
+                    fallback: {
+                        username,
+                        password: _res.data.token,
+                        uri: `sip:${username}`
+                    },
+                },
             },
             realName: [
                 _res.data.first_name,
@@ -142,7 +188,7 @@ class UserAdapterVoipgrid extends UserAdapter {
         // No account selected yet.
         if (!selectedAccount.username || !selectedAccount.password) {
             this.app.logger.info(`${this}no account set; use ConnectAB account info`)
-            await this.app.setState({settings: {webrtc: {account: {selected: userFields.platform.account}}}}, {persist: true})
+            await this.app.setState({settings: {webrtc: {account: {selected: userFields.platform.account.fallback}}}}, {persist: true})
         }
 
         this.app.setState({user: {status: null}})
