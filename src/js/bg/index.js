@@ -30,22 +30,6 @@ class UserAdapterVoipgrid extends UserAdapter {
     _initialState() {
         return {
             platform: {
-                account: {
-                    fallback: {
-                        id: null,
-                        password: null,
-                        username: null,
-                    },
-                    selected: {
-                        // A selected account may not be the actual *used*
-                        // account at that moment when the fallback account
-                        // is used. This is just a reference to the previously
-                        // set account option, so we can restore it when
-                        // re-enabling webrtc again.
-                        id: null,
-                    },
-                    selection: true,
-                },
                 tokens: {
                     portal: null,
                     sip: null,
@@ -82,15 +66,24 @@ class UserAdapterVoipgrid extends UserAdapter {
     * Handles changing the account and signals the when this is done
     * by responding with the *complete* account credentials in
     * the callback.
+    * @param options - options to pass.
+    * @param options.accountId - Id of an account from options to set.
+    * @param options.callback - Callback to the original emitting event.
     */
-    async _selectAccount({account, callback}) {
-        this.app.logger.info(`${this}switching to new account: ${account.id}`)
+    async _selectAccount({accountId, callback}) {
+        this.app.logger.info(`${this}retrieving account credentials for account ${accountId}`)
         // New API call:
         // const res = await this.app.api.client.put('api/plugin/user/selected_account/', {id: account.id})
         // account = this.app.plugins.user.adapter._formatAccount(account)
-        this.app.setState({
-            settings: {webrtc: {account: {selected: account}}},
-            user: {platform: {account: {selected: {id: account.id}}}},
+        let account = this.app.state.settings.webrtc.account
+        if (accountId) {
+            account.selected = this.app.state.settings.webrtc.account.options.find((i) => i.id === accountId)
+            account.placeholder.id = account.selected.id
+        } else {
+            account.selected =  this.app.state.settings.webrtc.account.fallback
+        }
+        await this.app.setState({
+            settings: {webrtc: {account, enabled: accountId ? true : false}}
         }, {persist: true})
         callback({account})
     }
@@ -157,20 +150,7 @@ class UserAdapterVoipgrid extends UserAdapter {
         let userFields = {
             client_id: _res.data.client.replace(/[^\d.]/g, ''),
             id: _res.data.id,
-            platform: {
-                account: {
-                    fallback: {
-                        username,
-                        password: _res.data.token,
-                        uri: `sip:${username}`
-                    },
-                },
-            },
-            realName: [
-                _res.data.first_name,
-                _res.data.preposition,
-                _res.data.last_name
-            ].filter((i) => i !== '').join(' '),
+            realName: [_res.data.first_name, _res.data.preposition, _res.data.last_name].filter((i) => i !== '').join(' '),
             token: res.data.api_token,
         }
 
@@ -185,10 +165,18 @@ class UserAdapterVoipgrid extends UserAdapter {
         await super.login({username, password, userFields})
 
         let selectedAccount = this.app.state.settings.webrtc.account.selected
+        let accountConnectAB = {
+            username,
+            password: _res.data.token,
+            uri: `sip:${username}`
+        }
         // No account selected yet.
         if (!selectedAccount.username || !selectedAccount.password) {
-            this.app.logger.info(`${this}no account set; use ConnectAB account info`)
-            await this.app.setState({settings: {webrtc: {account: {selected: userFields.platform.account.fallback}}}}, {persist: true})
+            this.app.logger.info(`${this}set account default to connectAB`)
+            await this.app.setState({settings: {webrtc: {account: {
+                fallback: accountConnectAB,
+                selected: accountConnectAB}}}
+            }, {persist: true})
         }
 
         this.app.setState({user: {status: null}})
