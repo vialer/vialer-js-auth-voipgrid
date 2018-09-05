@@ -63,29 +63,49 @@ class UserAdapterVoipgrid extends UserAdapter {
 
 
     /**
-    * Handles changing the account and signals the when this is done
-    * by responding with the *complete* account credentials in
+    * Handles changing the account and signals when the new account info
+    * is loaded, by responding with the *complete* account credentials in
     * the callback.
     * @param options - options to pass.
     * @param options.accountId - Id of an account from options to set.
     * @param options.callback - Callback to the original emitting event.
     */
     async _selectAccount({accountId, callback}) {
-        this.app.logger.info(`${this}retrieving account credentials for account ${accountId}`)
-        // New API call:
-        // const res = await this.app.api.client.put('api/plugin/user/selected_account/', {id: account.id})
-        // account = this.app.plugins.user.adapter._formatAccount(account)
+        this.app.logger.info(`${this}select account ${accountId}`)
         let account = this.app.state.settings.webrtc.account
         if (accountId) {
-            account.selected = this.app.state.settings.webrtc.account.options.find((i) => i.id === accountId)
-            account.placeholder.id = account.selected.id
+            const res = await this.app.api.client.put('api/plugin/user/selected_account/', {id: accountId})
+            // Setting a plugin account may fail. Notify the user
+            // that an error occured.
+            if (res.status === 400) {
+                const message = this.app.$t('unexpected error!')
+                this.app.notify({
+                    icon: 'github',
+                    link: {
+                        url: 'https://github.com/vialer/vialer-js/issues',
+                        text: `${this.app.$t('more info')}...`,
+                    },
+                    message, type: 'warning', timeout: 0})
+                return
+            }
+
+            account.selected = this._formatAccount(res.data)
+            account.using = this._formatAccount(res.data)
         } else {
-            account.selected =  this.app.state.settings.webrtc.account.fallback
+            account.using = this.app.state.settings.webrtc.account.fallback
         }
+
+        account.status = null
+
         await this.app.setState({
-            settings: {webrtc: {account, enabled: accountId ? true : false}}
+            settings: {
+                webrtc: {
+                    account,
+                    enabled: accountId ? true : false,
+                },
+            },
         }, {persist: true})
-        callback({account})
+        callback({account: account.selected})
     }
 
 
@@ -138,18 +158,23 @@ class UserAdapterVoipgrid extends UserAdapter {
         }
 
         this.app.api.setupClient(username, res.data.api_token)
-        const _res = await this.app.api.client.get('api/permission/systemuser/profile/')
+        const _res = await this.app.api.client.get('api/plugin/user/')
 
-        if (!_res.data.client) {
-            //Logout partner users. Only platform client users are able to use
-            // VoIPGRID platform telephony features.
-            this.logout()
-            this.app.notify({icon: 'settings', message: this.app.$t('this type of user is invalid.'), type: 'warning'})
+        // Do some checks for user validity.
+        if (_res.status === 401) {
+            // Only platform client users are able to use VoIPGRID
+            // platform telephony features.
+            const message = this.app.$t('a partner user cannot be used to login with.')
+            this.app.changeSession(null, {app: {notifications: [{icon: 'settings', message, type: 'warning'}]}})
+            return
+        } else if (_res.data === 'You need to change your password in the portal') {
+            this.app.notify({icon: 'settings', message: this.app.$t('You need to change your password in the portal.'), type: 'warning'})
             return
         }
+
         let userFields = {
-            client_id: _res.data.client.replace(/[^\d.]/g, ''),
-            id: _res.data.id,
+            client_id: _res.data.client_id,
+            id: _res.data.systemuser_id,
             realName: [_res.data.first_name, _res.data.preposition, _res.data.last_name].filter((i) => i !== '').join(' '),
             token: res.data.api_token,
         }
@@ -166,6 +191,7 @@ class UserAdapterVoipgrid extends UserAdapter {
 
         let selectedAccount = this.app.state.settings.webrtc.account.selected
         let accountConnectAB = {
+            name: username,
             username,
             password: _res.data.token,
             uri: `sip:${username}`
