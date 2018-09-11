@@ -78,7 +78,7 @@ class UserAdapterVoipgrid extends UserAdapter {
             // Setting a plugin account may fail. Notify the user
             // that an error occured.
             if (res.status === 400) {
-                const message = this.app.$t('unexpected error!')
+                const message = `${this.app.$t('unexpected error')}!`
                 this.app.notify({
                     icon: 'github',
                     link: {
@@ -168,7 +168,19 @@ class UserAdapterVoipgrid extends UserAdapter {
             this.app.changeSession(null, {app: {notifications: [{icon: 'settings', message, type: 'warning'}]}})
             return
         } else if (_res.data === 'You need to change your password in the portal') {
-            this.app.notify({icon: 'settings', message: this.app.$t('You need to change your password in the portal.'), type: 'warning'})
+            this.app.notify({icon: 'settings', message: this.app.$t('please change your {name} password first.', {
+                name: this.app.state.app.vendor.portal.name,
+            }), type: 'warning'})
+
+            this.app.helpers.openWindow({
+                focused: false,
+                height: 550,
+                type: 'panel',
+                url: this.app.state.settings.platform.url,
+                width: 450,
+            })
+
+            this.app.setState({user: {status: null}})
             return
         }
 
