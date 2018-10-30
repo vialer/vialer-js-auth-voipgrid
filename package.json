@@ -1,5 +1,5 @@
 {
-    "name": "vjs-adapter-user-vg",
+    "name": "@vialer/vjs-adapter-user-vg",
     "version": "3.0.0",
     "description": "Vialer-js User adapter for the VoIPGRID API.",
     "main": "index.js",
