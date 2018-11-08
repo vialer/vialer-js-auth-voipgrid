@@ -119,9 +119,10 @@ class UserAdapterVoipgrid extends UserAdapter {
     * profile information with. Save the credentials in storage when the call
     * is succesful, otherwise remove the credentials from the store.
     * @param {object} options - Options to pass.
+    * @param {Function} options.callback - Callback.
     * @param {String} options.username - Email address to login with.
     * @param {String} options.password - Password to login with.
-    * @param {String} [options.token] - A 2fa token to login with.
+    * @param {String} [options.token] - A 2FA token to login with.
     */
     async login({callback, username, password, token}) {
         this.app.setState({user: {status: 'login'}})
@@ -145,7 +146,8 @@ class UserAdapterVoipgrid extends UserAdapter {
                     if (validationMessage === 'this field is required') {
                         // Switch two-factor view.
                         this.app.setState({user: {twoFactor: true}})
-                    } else if (validationMessage === 'invalid two_factor_token') {
+                        callback({twoFactor: true, valid: false})
+                    } else {
                         message = this.app.$t('invalid two factor token. Please check your tokenizer.')
                         callback({message, valid: false})
                     }
@@ -160,6 +162,10 @@ class UserAdapterVoipgrid extends UserAdapter {
             }
             this.app.setState({user: {status: null}})
             return
+        }
+
+        if (callback) {
+            callback({valid: true})
         }
 
         this.app.api.setupClient(username, res.data.api_token)
