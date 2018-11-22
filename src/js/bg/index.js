@@ -55,6 +55,11 @@ class UserAdapterVoipgrid extends UserAdapter {
                 return reject(err)
             }
 
+            if (res.status == 401) {
+                // Logout.
+                this.app.changeSession(null)
+            }
+
             this.app.setState({user: {platform: {tokens: {portal: res.data.token}}}})
             this.app.logger.info(`${this}(re)loaded autologin token`)
             resolve()
@@ -129,7 +134,7 @@ class UserAdapterVoipgrid extends UserAdapter {
         res = await this.app.api.client.post('api/permission/apitoken/', apiParams)
 
         // A login failure. Give the user feedback about what went wrong.
-        if (this.app.api.NOTOK_STATUS.includes(res.status)) {
+        if (!this.app.api.OK_STATUS.includes(res.status)) {
             let message
             if (res.data.apitoken) {
                 if (res.data.apitoken.email || res.data.apitoken.password) {
