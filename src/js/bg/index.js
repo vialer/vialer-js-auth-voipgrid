@@ -202,7 +202,7 @@ class UserAdapterVoipgrid extends UserAdapter {
             token: res.data.api_token,
         }
 
-        this.app.logger.info(`${this}${username} authenticated successfully`)
+        this.app.logger.info(`${this}authenticated successfully.`)
 
         if (this.app.state.app.session.active !== username) {
             // State is reinitialized, but we are not done loading yet.
